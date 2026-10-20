@@ -1,10 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { formatPrice, games, products } from "@/lib/products";
 
 export const metadata: Metadata = { title: "สินค้าทั้งหมด" };
 
-export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ q?: string | string[]; game?: string | string[] }> }) {
+type ProductsPageProps = { searchParams: Promise<{ q?: string | string[]; game?: string | string[] }> };
+
+export default function ProductsPage({ searchParams }: ProductsPageProps) {
+  return (
+    <Suspense fallback={<main className="shop-container flex-1 py-12" role="status">กำลังโหลดสินค้า...</main>}>
+      <ProductsContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function ProductsContent({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
   const game = typeof params.game === "string" ? params.game : "";
