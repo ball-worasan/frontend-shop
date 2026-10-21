@@ -11,7 +11,7 @@ const featuredGroups = [
 
 function ProductTile({ product }: { product: Product }) {
   const game = games.find((entry) => entry.slug === product.gameSlug);
-  const href = `/products?q=${encodeURIComponent(product.name)}`;
+  const href = `/products/${product.id}`;
 
   return (
     <Link href={href} className="card card-border group min-w-0 overflow-hidden rounded-card border border-border bg-surface transition-transform duration-200 hover:-translate-y-1 hover:border-accent focus-visible:border-accent">

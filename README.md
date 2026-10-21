@@ -1,36 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GAME SHOP
 
-## Getting Started
+Next.js storefront สำหรับทดลองเลือกซื้อไอดีและไอเท็มเกมด้วยข้อมูลสมมติ ไม่มี backend, การรับเงิน, ระบบบัญชี หรือการส่งมอบสินค้าจริง
 
-First, run the development server:
+## พัฒนาในเครื่อง
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install --frozen-lockfile
+bun run dev
+bun run lint
+bunx tsc --noEmit
+bun run test
+bun run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+เปิด `http://localhost:3000` แล้วทดลองเส้นทาง `/products` → `/products/demo-003` → `/checkout?product=demo-003&quantity=2` → `/orders` หน้า `/login`, `/register`, `/forgot-password` และ `/help` เป็นโหมดสาธิตเช่นกัน
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ข้อมูลคำสั่งซื้อสาธิต
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+คำสั่งซื้อเก็บใน `localStorage` ของเบราว์เซอร์ภายใต้ schema version 1 เท่านั้น Reload แล้วรายการยังอยู่ แต่เปลี่ยนเบราว์เซอร์หรืออุปกรณ์จะไม่เห็นรายการเดิม ใช้ปุ่ม “ล้างข้อมูลสาธิต” บนหน้า `/orders` เพื่อลบข้อมูลนี้ อย่ากรอกข้อมูลส่วนตัว รหัสผ่านจริง หรือรหัสเกมจริงในฟอร์มตัวอย่าง
 
-## Learn More
+ข้อมูลสินค้าอยู่ใน `lib/products.ts`; ตัวกรองอยู่ใน `lib/catalog.ts`; การตรวจจำนวนและข้อมูลคำสั่งซื้อจำลองอยู่ใน `lib/demo-orders.ts` ภาพสินค้าใน fixtures เป็นภาพประกอบ placeholder ไม่ใช่ภาพสินค้าเกมจริง
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+UI ใช้ Tailwind CSS และชื่อคลาส daisyUI ตาม skill ใน `.agents/skills/daisyui` ขณะนี้แพ็กเกจ daisyUI ยังไม่ได้ติดตั้งเพราะ registry เข้าถึงไม่ได้ จึงมี Tailwind fallback สำหรับหน้าใหม่ ต้องตรวจธีมและ component อีกครั้งหลังติดตั้ง daisyUI 5

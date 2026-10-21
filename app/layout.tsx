@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Noto_Sans_Thai } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-dvh flex flex-col">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-control focus:bg-primary focus:px-4 focus:py-2 focus:text-white">ข้ามไปเนื้อหาหลัก</a>
-        <SiteHeader />
+        <Suspense fallback={<div className="min-h-18 border-b border-border bg-background" />}><SiteHeader /></Suspense>
         <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col">{children}</div>
         <SiteFooter />
       </body>

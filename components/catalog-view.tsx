@@ -102,7 +102,7 @@ export function CatalogView({ basePath, query, fixedGame }: { basePath: string; 
 
           {items.length > 0 ? (
             <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
-              {items.map((product) => <li key={product.id} className="min-w-0"><ProductCard product={product} href={`/products?q=${encodeURIComponent(product.name)}`} /></li>)}
+              {items.map((product) => <li key={product.id} className="min-w-0"><ProductCard product={product} /></li>)}
             </ul>
           ) : (
             <div className="card card-border rounded-card border border-border bg-surface p-8">
