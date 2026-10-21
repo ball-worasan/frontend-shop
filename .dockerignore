@@ -1,0 +1,15 @@
+*
+!app
+!app/**
+!public
+!public/**
+!package.json
+!bun.lock
+!next.config.ts
+!tsconfig.json
+**/.env*
+**/*.pem
+**/*.key
+**/kubeconfig*
+**/id_rsa*
+**/id_ed25519*
