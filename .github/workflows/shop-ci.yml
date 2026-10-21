@@ -58,9 +58,10 @@ jobs:
           set -euo pipefail
           docker run --rm --user "$(id -u):$(id -g)" \
             --env BUN_INSTALL_CACHE_DIR=/tmp/bun-cache \
+            --env NEXT_TELEMETRY_DISABLED=1 \
             --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/app" \
             -w /app oven/bun:1.4.3@sha256:c017a211c49a21adc0e49dda7b60ac8112887c3d9465e01427f434ed107c830e \
-            sh -c 'bun install --frozen-lockfile && bun run lint && bun test && bun x tsc --noEmit'
+            sh -c 'bun install --frozen-lockfile && bun run lint && bun test && bun run typecheck'
       - name: Build image without build credentials
         run: docker build --pull --label "org.opencontainers.image.revision=$GITHUB_SHA" --tag frontend-shop:ci .
       - name: Scan effective image filesystem for secrets

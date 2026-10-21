@@ -15,12 +15,14 @@ import tarfile
 import tempfile
 
 GITLEAKS = os.environ.get("GITLEAKS_BIN", "gitleaks")
+GITLEAKS_CONFIG = Path(__file__).with_name("gitleaks-image.toml")
 SENSITIVE = re.compile(r"(secret|token|password|private.?key|credential|api.?key)", re.I)
 
 
 def run_scan(path: Path) -> bool:
     command = [
         GITLEAKS, "dir", str(path), "--no-banner", "--redact", "--exit-code", "1",
+        "--config", str(GITLEAKS_CONFIG),
     ]
     return subprocess.run(command, check=False).returncode == 0
 
