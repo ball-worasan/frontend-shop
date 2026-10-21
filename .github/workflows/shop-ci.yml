@@ -1,0 +1,181 @@
+name: frontend-shop CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - development
+      - 'release-v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shop-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate Docker inputs and tracked paths
+        run: python3 ci/check_context.py
+      - name: Install verified Gitleaks scanner
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_linux_x64.tar.gz \
+            -o "$RUNNER_TEMP/gitleaks.tar.gz"
+          echo '79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e  '"$RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check --status
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
+      - name: Scan repository history and working tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-list --all --count)" -gt 0
+          "$RUNNER_TEMP/gitleaks" git "$GITHUB_WORKSPACE" --no-banner --redact --log-opts=--all --exit-code 1
+          "$RUNNER_TEMP/gitleaks" dir "$GITHUB_WORKSPACE" --no-banner --redact --exit-code 1
+      - name: Check scanner failure with a synthetic key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/secret-canary"
+          printf 'token = ghp_%s%s\n' 'A1b2C3d4E5f6G7h8' 'I9j0K1l2M3n4O5p6Q7r8' > "$RUNNER_TEMP/secret-canary/example.txt"
+          if "$RUNNER_TEMP/gitleaks" dir "$RUNNER_TEMP/secret-canary" \
+            --no-banner --redact --exit-code 1 >/dev/null 2>&1; then
+            echo 'Synthetic secret was not detected' >&2
+            exit 1
+          fi
+      - name: Install frozen dependencies and check source
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --user "$(id -u):$(id -g)" \
+            --env BUN_INSTALL_CACHE_DIR=/tmp/bun-cache \
+            --env NEXT_TELEMETRY_DISABLED=1 \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/app" \
+            -w /app oven/bun:1.4.3@sha256:c017a211c49a21adc0e49dda7b60ac8112887c3d9465e01427f434ed107c830e \
+            sh -c 'bun install --frozen-lockfile && bun run lint && bun test && bun run typecheck'
+      - name: Build image without build credentials
+        run: docker build --pull --label "org.opencontainers.image.revision=$GITHUB_SHA" --tag frontend-shop:ci .
+      - name: Scan effective image filesystem for secrets
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: frontend-shop:ci
+          scan-type: image
+          scanners: secret
+          format: json
+          output: ${{ runner.temp }}/trivy-secrets.json
+          exit-code: '1'
+          version: v0.75.0
+      - name: Scan every raw image layer and config
+        shell: bash
+        env:
+          GITLEAKS_BIN: ${{ runner.temp }}/gitleaks
+        run: |
+          set -euo pipefail
+          docker save --output "$RUNNER_TEMP/frontend-shop.tar" frontend-shop:ci
+          python3 ci/scan_image_layers.py "$RUNNER_TEMP/frontend-shop.tar"
+      - name: Upload verified image for isolated publisher
+        if: github.event_name == 'push' && vars.FRONTEND_SHOP_PUBLISH_ENABLED == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-shop-image
+          path: ${{ runner.temp }}/frontend-shop.tar
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name == 'push' && vars.FRONTEND_SHOP_PUBLISH_ENABLED == 'true'
+    needs: build-and-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: frontend-shop-image
+          path: ${{ runner.temp }}/image
+      - name: Load scanned image
+        run: docker load --input "$RUNNER_TEMP/image/frontend-shop.tar"
+      - name: Publish GHCR image
+        id: push
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/ball-worasan/frontend-shop:sha-${GITHUB_SHA}"
+          echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin >/dev/null
+          docker tag frontend-shop:ci "$image"
+          docker push "$image" >"$RUNNER_TEMP/push.log"
+          digest="$(sed -nE 's/.*digest: (sha256:[a-f0-9]{64}).*/\1/p' "$RUNNER_TEMP/push.log" | tail -1)"
+          [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "Published ghcr.io/ball-worasan/frontend-shop@$digest"
+
+  promote:
+    if: github.event_name == 'push' && vars.FRONTEND_SHOP_DEPLOY_ENABLED == 'true'
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: ${{ github.ref_name == 'development' && 'development' || 'uat' }}
+    concurrency:
+      group: shop-promotion-${{ github.ref_name == 'development' && 'dev' || 'uat' }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        id: app
+        with:
+          app-id: ${{ vars.SHOP_GITOPS_APP_ID }}
+          private-key: ${{ secrets.SHOP_GITOPS_APP_PRIVATE_KEY }}
+          owner: ball-worasan
+          repositories: homelab-gitops
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ball-worasan/homelab-gitops
+          ref: main
+          token: ${{ steps.app.outputs.token }}
+          path: gitops
+      - name: Create guarded GitOps promotion PR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          IMAGE_DIGEST: ${{ needs.publish.outputs.digest }}
+        run: |
+          set -euo pipefail
+          latest="$(git -C source ls-remote origin "refs/heads/$GITHUB_REF_NAME" | cut -f1)"
+          test "$latest" = "$GITHUB_SHA"
+          python3 source/ci/promote.py --gitops gitops --ref "$GITHUB_REF_NAME" \
+            --source "$GITHUB_SHA" --digest "$IMAGE_DIGEST"
+          branch="shop-promotion-${GITHUB_REF_NAME}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git -C gitops switch -c "$branch"
+          git -C gitops add -A -- k8s/apps/frontend-shop ops
+          if git -C gitops diff --cached --quiet; then
+            echo 'GitOps already points at this source and digest'
+            exit 0
+          fi
+          git -C gitops config user.name 'frontend-shop-promotion[bot]'
+          git -C gitops config user.email 'frontend-shop-promotion[bot]@users.noreply.github.com'
+          git -C gitops commit -m "Promote frontend-shop ${GITHUB_REF_NAME} ${IMAGE_DIGEST}"
+          git -C gitops push origin "HEAD:refs/heads/$branch"
+          gh pr create --repo ball-worasan/homelab-gitops --base main --head "$branch" \
+            --title "Promote frontend-shop ${GITHUB_REF_NAME}" \
+            --body "Source: ${GITHUB_SHA}; image: ghcr.io/ball-worasan/frontend-shop@${IMAGE_DIGEST}. Guarded frontend manifest update."
+          gh pr merge --repo ball-worasan/homelab-gitops --auto --squash "$branch"

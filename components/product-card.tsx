@@ -5,7 +5,7 @@ import { Badge } from "./ui/badge";
 export function ProductCard({ product, href = `/products/${product.id}` }: { product: Product; href?: string }) {
   const game = games.find((entry) => entry.slug === product.gameSlug);
   return (
-    <Link href={href} className="group block min-w-0 overflow-hidden rounded-card border border-border bg-surface transition duration-150 hover:-translate-y-0.5 hover:border-accent">
+    <Link href={href} className="group block min-w-0 overflow-hidden rounded-card border border-border bg-surface transition duration-150 hover:border-accent hover:shadow-[0_0_24px_rgba(124,58,237,.18)] motion-safe:hover:-translate-y-0.5 focus-visible:border-accent">
       <div className="relative aspect-[4/3] bg-raised">
         <Image src={product.image} alt={product.imageAlt} fill sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 280px" className="object-cover" />
       </div>

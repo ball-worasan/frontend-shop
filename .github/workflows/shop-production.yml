@@ -1,0 +1,71 @@
+name: frontend-shop production promotion
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  promote-production:
+    if: vars.FRONTEND_SHOP_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production
+    concurrency:
+      group: shop-promotion-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        id: app
+        with:
+          app-id: ${{ vars.SHOP_GITOPS_APP_ID }}
+          private-key: ${{ secrets.SHOP_GITOPS_APP_PRIVATE_KEY }}
+          owner: ball-worasan
+          repositories: homelab-gitops
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ball-worasan/homelab-gitops
+          ref: main
+          token: ${{ steps.app.outputs.token }}
+          path: gitops
+      - name: Check UAT acceptance and prepare same digest
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          record="gitops/ops/frontend-shop-releases/${GITHUB_REF_NAME}.json"
+          digest="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["digest"])' "$record")"
+          python3 source/ci/promote.py --gitops gitops --ref "$GITHUB_REF_NAME" \
+            --source "$GITHUB_SHA" --digest "$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Create guarded GitOps production PR
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          IMAGE_DIGEST: ${{ steps.release.outputs.digest }}
+        run: |
+          set -euo pipefail
+          branch="shop-promotion-production-${GITHUB_REF_NAME}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git -C gitops switch -c "$branch"
+          git -C gitops add -A -- k8s/apps/frontend-shop ops
+          if git -C gitops diff --cached --quiet; then
+            echo 'Production already points at this UAT digest'
+            exit 0
+          fi
+          git -C gitops config user.name 'frontend-shop-promotion[bot]'
+          git -C gitops config user.email 'frontend-shop-promotion[bot]@users.noreply.github.com'
+          git -C gitops commit -m "Promote frontend-shop ${GITHUB_REF_NAME} ${IMAGE_DIGEST}"
+          git -C gitops push origin "HEAD:refs/heads/$branch"
+          gh pr create --repo ball-worasan/homelab-gitops --base main --head "$branch" \
+            --title "Promote frontend-shop ${GITHUB_REF_NAME} to production" \
+            --body "Source: ${GITHUB_SHA}; exact UAT image: ghcr.io/ball-worasan/frontend-shop@${IMAGE_DIGEST}. Public route requires separate owner approval."
+          gh pr merge --repo ball-worasan/homelab-gitops --auto --squash "$branch"
