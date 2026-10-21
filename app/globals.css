@@ -70,6 +70,14 @@ body {
 #featured-tabs .featured-tab-panel { display: none; order: 1; flex-basis: 100%; width: 100%; }
 #featured-tabs .featured-tab-input:checked + .featured-tab-panel { display: grid; }
 
+@media (max-width: 639px) {
+  body:has(#product-purchase) footer { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a, button { transition: color 160ms, background-color 160ms, border-color 160ms, box-shadow 160ms; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

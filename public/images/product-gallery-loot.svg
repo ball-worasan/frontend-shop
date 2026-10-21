@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="ภาพประกอบไอเท็มเกมสมมติ">
+  <defs><radialGradient id="glow"><stop stop-color="#6842b6"/><stop offset="1" stop-color="#121a33"/></radialGradient><linearGradient id="gem" x2="1" y2="1"><stop stop-color="#eee9ff"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#5631a4"/></linearGradient></defs>
+  <rect width="800" height="600" fill="url(#glow)"/><rect x="92" y="74" width="616" height="452" rx="36" fill="#141d36" stroke="#67799e" stroke-width="3"/><path d="M400 130 565 250l-63 189H298l-63-189Z" fill="#28345a" stroke="#a78bfa" stroke-width="5"/><path d="M400 166 515 257l-46 146H331l-46-146Z" fill="url(#gem)"/><path d="M400 166v237M285 257h230M331 403l69-146 69 146" stroke="#efeaff" stroke-opacity=".7" stroke-width="3"/><circle cx="400" cy="285" r="24" fill="#f5f0ff"/><path d="M162 185h47m-24-24v48M605 390h43m-21-21v43" stroke="#c4b5fd" stroke-width="4" stroke-linecap="round"/>
+  <text x="400" y="485" fill="#d7d2ef" font-family="Arial,sans-serif" font-size="22" text-anchor="middle" letter-spacing="8">DEMO LOOT</text>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="ภาพประกอบโลกเกมสมมติ">
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#111a35"/><stop offset="1" stop-color="#302060"/></linearGradient><radialGradient id="halo"><stop stop-color="#c4b5fd" stop-opacity=".7"/><stop offset="1" stop-color="#7c3aed" stop-opacity="0"/></radialGradient></defs>
+  <rect width="800" height="600" fill="url(#sky)"/><circle cx="400" cy="270" r="210" fill="url(#halo)"/><circle cx="400" cy="270" r="132" fill="none" stroke="#c4b5fd" stroke-width="4" stroke-opacity=".8"/><circle cx="400" cy="270" r="93" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-dasharray="15 15"/>
+  <path d="M0 500 170 300l150 170 150-260 130 180 110-90 90 200v100H0Z" fill="#161e38" stroke="#64729d" stroke-width="4"/><path d="M160 600 320 470 400 500 500 425 640 600" fill="#252e51"/><path d="M400 155 460 270 400 385 340 270Z" fill="#8b5cf6" stroke="#e9ddff" stroke-width="5"/><path d="M400 190 430 270 400 350 370 270Z" fill="#c4b5fd"/>
+  <text x="400" y="545" fill="#d7d2ef" font-family="Arial,sans-serif" font-size="22" text-anchor="middle" letter-spacing="8">DEMO WORLD</text>
+</svg>
