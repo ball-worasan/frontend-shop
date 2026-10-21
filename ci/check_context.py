@@ -8,7 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 ALLOWED = {"package.json", "bun.lock", "next.config.ts", "tsconfig.json"}
-DIRS = {"app", "public"}
+DIRS = {"app", "components", "lib", "public"}
 DENIED_NAME = re.compile(r"(^|/)(\.env[^/]*|id_rsa[^/]*|id_ed25519[^/]*|kubeconfig[^/]*|[^/]+\.(pem|key|p12|pfx|jks|sqlite|db))$", re.I)
 
 
@@ -22,7 +22,7 @@ def tracked() -> list[str]:
 def main() -> int:
     files = tracked()
     bad = [path for path in files if DENIED_NAME.search(path)]
-    expected = {"*", "!app", "!app/**", "!public", "!public/**"}
+    expected = {"*", "!app", "!app/**", "!components", "!components/**", "!lib", "!lib/**", "!public", "!public/**"}
     actual = set((ROOT / ".dockerignore").read_text().splitlines())
     if not expected.issubset(actual):
         print("Docker context allowlist missing", file=sys.stderr)
