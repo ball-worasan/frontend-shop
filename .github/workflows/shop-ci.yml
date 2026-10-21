@@ -178,4 +178,4 @@ jobs:
           gh pr create --repo ball-worasan/homelab-gitops --base main --head "$branch" \
             --title "Promote frontend-shop ${GITHUB_REF_NAME}" \
             --body "Source: ${GITHUB_SHA}; image: ghcr.io/ball-worasan/frontend-shop@${IMAGE_DIGEST}. Guarded frontend manifest update."
-          gh pr merge --repo ball-worasan/homelab-gitops --auto --squash "$branch"
+          echo "Promotion PR opened; merge it manually in homelab-gitops after review"
