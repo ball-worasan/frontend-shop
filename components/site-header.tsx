@@ -72,7 +72,7 @@ export function SiteHeader() {
           <details key={pathname} className="group relative">
             <summary className="cursor-pointer list-none text-sm font-medium text-muted hover:text-accent">เลือกเกม <span aria-hidden="true">⌄</span></summary>
             <div className="absolute left-0 top-full mt-4 min-w-48 rounded-card border border-border bg-surface p-2 shadow-xl">
-              {games.map((game) => <Link key={game.slug} href={`/products?game=${game.slug}`} className="block rounded-control px-3 py-3 text-sm hover:bg-raised">{game.name}</Link>)}
+              {games.map((game) => <Link key={game.slug} href={`/games/${game.slug}`} className="block rounded-control px-3 py-3 text-sm hover:bg-raised">{game.name}</Link>)}
             </div>
           </details>
         </nav>

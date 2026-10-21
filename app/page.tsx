@@ -71,7 +71,7 @@ export default function Home() {
         <SectionHeading id="games-title" eyebrow="EXPLORE GAMES" title="เลือกเกมที่ชอบ" href="/products" linkLabel="ดูสินค้าทั้งหมด" />
         <div className="grid gap-4 sm:grid-cols-2">
           {games.map((game, index) => (
-            <Link key={game.slug} href={`/products?game=${game.slug}`} className="card card-border group relative min-h-36 overflow-hidden rounded-card border border-border bg-surface transition-colors hover:border-accent hover:bg-raised sm:min-h-44">
+            <Link key={game.slug} href={`/games/${game.slug}`} className="card card-border group relative min-h-36 overflow-hidden rounded-card border border-border bg-surface transition-colors hover:border-accent hover:bg-raised sm:min-h-44">
               <span aria-hidden="true" className={`absolute -right-8 -top-12 size-48 rounded-full border-[24px] opacity-25 ${index === 0 ? "border-primary" : "border-accent"}`} />
               <span aria-hidden="true" className="absolute bottom-3 right-10 text-8xl font-black text-foreground/5">0{index + 1}</span>
               <span className="card-body relative flex flex-row items-end justify-between gap-4 p-6 sm:p-8">
